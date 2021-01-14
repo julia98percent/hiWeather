@@ -4,9 +4,10 @@ import Loading from "./Loading";
 import * as Location from "expo-location";
 import axios from "axios";
 import Weather from "./Weather";
+import Forecast from "./Forecast";
 
 const API_KEY = "9fc7c499ef4209962a4e21f8effcbdef";
-
+const language = "en";
 export default class extends React.Component {
   state = {
     isLoading: true,
@@ -14,19 +15,22 @@ export default class extends React.Component {
 
   getWeather = async (latitude, longitude) => {
     const {
-      data: {
-        main: { temp },
-        weather,
-      },
+      data: { main, weather, name },
     } = await axios.get(
-      `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`
+      `http://api.openweathermap.org/data/2.5/weather?&lang=${language}&lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric`
     );
+
     this.setState({
       isLoading: false,
       condition: weather[0].main,
-      temp,
+      temp: main.temp,
+      temp_max: main.temp_max,
+      temp_min: main.temp_min,
+      desc: weather[0].description,
+      name,
     });
   };
+
   getLocation = async () => {
     try {
       await Location.requestPermissionsAsync(); //Return Promise
@@ -36,18 +40,33 @@ export default class extends React.Component {
       this.getWeather(latitude, longitude);
       this.setState({ isLoading: true });
     } catch (error) {
-      Alert.alert("Can't find you...", "So sad");
+      Alert.alert("Noooo...:O", "cannot access your GPS information");
     }
   };
   componentDidMount() {
     this.getLocation();
   }
   render() {
-    const { isLoading, temp, condition } = this.state;
+    const {
+      isLoading,
+      temp,
+      temp_min,
+      temp_max,
+      condition,
+      name,
+      desc,
+    } = this.state;
     return isLoading ? (
       <Loading />
     ) : (
-      <Weather temp={Math.round(temp)} condition={condition} />
+      <Weather
+        temp={Math.round(temp)}
+        condition={condition}
+        name={name}
+        desc={desc}
+        temp_min={temp_min}
+        temp_max={temp_max}
+      />
     );
   }
 }
